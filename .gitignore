@@ -1,0 +1,23 @@
+# python
+# .vscode/
+__pycache__/
+*.py[cod]
+
+# folder
+outputs/BNN*/*
+outputs_*/BNN*/*
+outputs_*/BNN*/*
+0-run_*.sh
+1-search_structure_*.py
+2-cal_parm_flops_*.py
+2-np_*.npy
+
+
+*.pth
+*.pth.tar
+*.pt
+
+search_first.log
+
+epoch_*_pareto*.png
+epochs_comparison_global*.png
