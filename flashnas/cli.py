@@ -13,11 +13,11 @@ from datetime import datetime, timezone
 ROOT = Path(__file__).resolve().parents[1]
 TASKS = {
     "predictor": ("net_predict/3-train_acc_predict.py", "."),
-    "search-stage1": ("1-search_first_stage.py", "."),
-    "search-stage2": ("1-search_second_stage.py", "."),
+    "search-stage1": ("flashnas/search/stage_one.py", "."),
+    "search-stage2": ("flashnas/search/stage_two.py", "."),
     "train": ("train/main/distributed_amp.py", "train_imagenet"),
     "evaluate": ("train/main/distributed_amp.py", "train_imagenet"),
-    "plot": ("1-search_draw_parato.py", "."),
+    "plot": ("flashnas/search/plot_pareto.py", "."),
 }
 
 
