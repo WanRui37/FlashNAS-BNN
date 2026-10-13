@@ -87,7 +87,8 @@ def preflight(config, plan):
         if p.get("mode") == "test":
             required.append(Path(p["out_path"]) / p["dataset"] / f"CharRNN_{p.get('model_arch', 'OUR')}_best.pth")
     elif config["task"] == "search-stage1":
-        required = [Path(p["model_path"])]
+        if p.get("mode") != "Only-Init":
+            required = [Path(p["model_path"])]
     elif config["task"] == "search-stage2":
         required = [Path(p["use_pth_name"])]
         if not (p.get("mode") == "real_time" and p.get("save_pth")):

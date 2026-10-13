@@ -61,6 +61,8 @@ parser.add_argument("--seed", default=0, type=int, help="seed for initializing t
 parser.add_argument("--first_float", default=1, type=int)
 parser.add_argument("--print_log", default=0, type=int)
 parser.add_argument("--init_output_path", default="./1-output.txt", type=str)
+parser.add_argument("--init_max_candidates", default=50, type=int,
+                    help="Additional maximal candidates in Only-Init mode; use 0 for just the initial population")
 parser.add_argument(
     "--save_epochs", type=str, default="", help='Comma-separated list of epochs to save checkpoint (e.g., "5,10,15")'
 )
@@ -329,6 +331,10 @@ class EvolutionSearcher:
 
             # 修改日志输出以显示延迟信息
             info = self.vis_dict[cand_tuple]
+            if self.mode == "Only-Init":
+                self.logger.info("initial %s/%s: %s, parm:%s, ops:%s",
+                                 len(self.candidates), num, cand_tuple, info["parm"], info["ops"])
+                continue
             self.logger.info(
                 "random {}/{}: {}, parm:{}, ops:{}, latency:{:.4f}ms, acc:{}".format(
                     len(self.candidates),
@@ -798,15 +804,14 @@ class EvolutionSearcher:
         # exit()
 
         if self.mode == "Only-Init":
-            self.get_max_cand()
+            self.get_max_cand(max_cand_num=self.args.init_max_candidates)
             if os.path.exists(self.args.init_output_path):
-                os.remove(self.args.init_output_path)
+                raise FileExistsError(f"Initialization output already exists: {self.args.init_output_path}")
 
             for cand_tuple in self.candidates:
                 self.logger.info(
-                    "OPs Stage.{}, Top-1 acc: {:.4f}, OPs: {:.2f}, Parm: {:.2f}".format(
+                    "Initialized architecture {}, OPs: {:.2f}, Parm: {:.2f}".format(
                         cand_tuple,
-                        self.vis_dict[cand_tuple]["acc"].cpu().item(),
                         self.vis_dict[cand_tuple]["ops"].cpu().item(),
                         self.vis_dict[cand_tuple]["parm"].cpu().item(),
                     )
@@ -987,7 +992,7 @@ def main():
 def main_worker(gpu, args):
     args.gpu = gpu
 
-    print(f"Use GPU: {args.gpu} for training")
+    print(f"Mode: {args.mode}; requested GPU: {args.gpu}")
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -1000,17 +1005,21 @@ def main_worker(gpu, args):
 
     t = time.time()
     # print(models.__dict__)
-    model = models.__dict__[args.arch](
-        embed_dim=model_config.embed_dim,
-        hidden_size=model_config.hidden_size,
-        dropout=model_config.dropout,
-        device=device,
-    ).to(device)
-
-    # args.model_path = args.model_path + "/" + args.dataset + "/" + "CharRNN_OUR_best.pth"
-    state_dict = torch.load(args.model_path, map_location=device)
-    model.load_state_dict(state_dict)
-    model.eval()
+    model = None
+    if args.population_num < 1 or args.init_max_candidates < 0:
+        raise ValueError("population-num must be positive and init_max_candidates must be nonnegative")
+    if args.mode == "Only-Init" and os.path.exists(args.init_output_path):
+        raise FileExistsError(f"Initialization output already exists: {args.init_output_path}")
+    if args.mode != "Only-Init":
+        model = models.__dict__[args.arch](
+            embed_dim=model_config.embed_dim,
+            hidden_size=model_config.hidden_size,
+            dropout=model_config.dropout,
+            device=device,
+        ).to(device)
+        state_dict = torch.load(args.model_path, map_location=device)
+        model.load_state_dict(state_dict)
+        model.eval()
 
     searcher = EvolutionSearcher(model, logger, args, device=device)
     searcher.search()
