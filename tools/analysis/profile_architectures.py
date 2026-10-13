@@ -1,3 +1,8 @@
+# Support both module execution and direct script invocation.
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
 import argparse
 import logging
 import os
@@ -46,6 +51,7 @@ parser.add_argument("--acc_width", type=int, default=224, choices=[32, 224, 416]
 parser.add_argument("--search_width", type=int, default=224, choices=[32, 224, 416])
 
 parser.add_argument("--read_txt", type=int, default=0, choices=[0, 1])
+parser.add_argument("--architecture_file", default="./1-output.txt")
 parser.add_argument("--first_float", type=int, default=1, choices=[0, 1])
 
 args = parser.parse_args()
@@ -308,7 +314,7 @@ if __name__ == "__main__":
         conv_type_2.append([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     else:
         channel_2_str, conv_type_2_str, stride_2_str = extract_text_from_file(
-            files="/mnt/wr/AdaBin-sousuo/cifar10/1-output.txt"
+            files=args.architecture_file
         )
         for ii in range(len(channel_2_str)):
             channel_2.append([int(item.strip()) for item in channel_2_str[ii][1:-1].split(",")])
