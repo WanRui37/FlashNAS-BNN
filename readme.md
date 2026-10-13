@@ -6,11 +6,10 @@ FlashNAS-BNN searches chain-structured binary neural networks using an accuracy 
 
 ## Highlights
 
-- **Two-stage architecture search:** CIF-Net-guided evolutionary exploration followed by hardware-aware candidate selection.
-- **Configurable experiments:** eight JSON recipes cover predictor fitting, architecture search, network training, evaluation, and Pareto visualization.
-- **Traceable runs:** resolved parameters, commands, Git revision, execution status, and console logs are saved for each experiment.
-- **Candidate-specific timing:** construct each searched binary network and measure its PyTorch inference latency on CPU or CUDA.
-- **Reproducible development:** disjoint seeded predictor splits, CPU regression tests, and GitHub Actions checks.
+- Chain-structured BNN NAS for efficient visual recognition across platforms.
+- A two-stage search with CIF-Net accelerates architecture search.
+- Cross-platform latency estimation bridges the gap between OPs and real runtime.
+- Image classification benchmarks show strong accuracy-latency trade-offs.
 
 ## Contents
 
