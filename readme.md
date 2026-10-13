@@ -152,7 +152,7 @@ ImageNet-100 results reported in the manuscript:
 | FlashNAS-BNN-H | GPU, Mali-G77 | 81.86 | 48.45 ± 0.21 |
 | FlashNAS-BNN-I | FPGA, XC7VX690T | 81.61 | 2.340 ± 0.008 |
 
-The machine-readable table is available in [results/manuscript-imagenet100.csv](results/manuscript-imagenet100.csv). The target-specific architectures combine competitive classification accuracy with efficient inference across CPU, GPU, and FPGA platforms.
+The target-specific architectures combine competitive classification accuracy with efficient inference across CPU, GPU, and FPGA platforms.
 
 ## Project structure
 
@@ -167,7 +167,6 @@ script/                   Compatibility search entrypoint
 train_imagenet/script/   Compatibility stage-1/stage-2 training entrypoints
 data/                    Data contracts (large input files remain untracked)
 checkpoints/             Checkpoint contracts (weights remain untracked)
-results/                 Reported manuscript results and provenance
 outputs/                 Local run manifests and logs (untracked)
 docs/                    Experiment protocols and contributor guidance
 tests/                   CLI, artifact checks, dataset split and CPU model regressions

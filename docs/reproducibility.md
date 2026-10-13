@@ -37,4 +37,4 @@ These fixes improve future experiments but do not assert that the changed code r
 
 `net_bw/Predict_BW.py`, `net_bw/dataset_bw.py` and `net_bw/__init__.py` were restored from the user's companion repository [WanRui37/FlashNAS-BNN-myself](https://github.com/WanRui37/FlashNAS-BNN-myself/tree/d4ac3d0cf20589324bbb1a557cfacd8534edd050/net_bw), commit `d4ac3d0cf20589324bbb1a557cfacd8534edd050`, because the original public scripts imported these missing modules. No bandwidth data or trained weights were invented or copied as new measurements.
 
-`results/manuscript-imagenet100.csv` preserves the author-provided revised manuscript table (`tab:4`) from the associated paper workspace at parent commit `c9dab26`. It is a report of existing results, not output of the tests. Publication metadata and license require confirmation before an archival release.
+The README results table preserves the author-provided revised manuscript table (`tab:4`) from the associated paper workspace at parent commit `c9dab26`. It is a report of existing results, not output of the tests. Publication metadata and license require confirmation before an archival release.
