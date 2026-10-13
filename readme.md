@@ -56,14 +56,16 @@ Run directly from the repository checkout; only the environment dependencies nee
 Inspect an experiment without downloading data or starting GPU work:
 
 ```bash
-python main.py run --config configs/search-stage1-imagenet100.json --dry-run
-bash run.sh run --config configs/train-stage1-imagenet100.json --dry-run
+python main.py run --config configs/examples/search-stage1-imagenet100.json --dry-run
+bash run.sh run --config configs/examples/train-stage1-imagenet100.json --dry-run
 ```
+
+All files in `configs/examples/` are illustrative examples for using the framework, rather than the official experiment configurations for the paper models. Copy an example and adapt its paths, architecture, budgets, and device settings for your experiment.
 
 Every configuration is ordinary JSON. `--set` overrides an existing value; it rejects misspelled keys:
 
 ```bash
-python main.py run --config configs/search-stage1-imagenet100.json \
+python main.py run --config configs/examples/search-stage1-imagenet100.json \
   --set parameters.seed=1234 \
   --set parameters.logdir=./search_output/imagenet100/seed1234/stage1 \
   --set run_dir=./outputs/runs/search-seed1234 --dry-run
@@ -100,17 +102,17 @@ See [checkpoint formats and locations](checkpoints/README.md) to organize CIF-Ne
 
 ## Training and evaluation
 
-The training recipes include an explicit candidate architecture. Set `environment.ARCH_ALL` to train your selected architecture, using the **same** value for both stages. Architecture encoding is documented in [data/README.md](data/README.md).
+The example training recipes include an illustrative candidate architecture. Set `environment.ARCH_ALL` to train your selected architecture, using the **same** value for both stages. Architecture encoding is documented in [data/README.md](data/README.md).
 
 ```bash
 # 1. Candidate training, stage 1: 128 epochs
-python main.py run --config configs/train-stage1-imagenet100.json
+python main.py run --config configs/examples/train-stage1-imagenet100.json
 
 # 2. Candidate training, stage 2: initialize from stage-1 checkpoint
-python main.py run --config configs/train-stage2-imagenet100.json
+python main.py run --config configs/examples/train-stage2-imagenet100.json
 
 # 3. Evaluate trained weights on the validation split
-python main.py run --config configs/evaluate-imagenet100.json
+python main.py run --config configs/examples/evaluate-imagenet100.json
 ```
 
 The examples use Adam, learning rate 1.25e-3, batch size 32 per process, seed 2024, and one GPU. Stage 1 uses weight decay 1e-5; stage 2 uses 0. Set `nproc` and `environment.CUDA_VISIBLE_DEVICES` together for multi-GPU execution. The launcher uses `torch.distributed.run` and the code reads `LOCAL_RANK`.
@@ -119,18 +121,26 @@ Training outputs include `train_imagenet/outputs/stage*/example/checkpoint/model
 
 ## Architecture search
 
+Generate an initial population for predictor training with seed 1234:
+
+```bash
+python main.py run --config configs/examples/init-imagenet100.json
+```
+
+The `Only-Init` recipe generates eight initial candidates and adds 50 maximal candidates without requiring a CIF-Net checkpoint. Boundary architectures deliberately broaden the fitting coverage beyond the later search budget. Architecture records are written to `init_output_path`; use new run and output paths for another initialization run.
+
 ```bash
 # Offline: fit the primary accuracy predictor on supplied label arrays
-python main.py run --config configs/predictor-imagenet100.json
+python main.py run --config configs/examples/predictor-imagenet100.json
 
 # Stage I: evolutionary search using that predictor
-python main.py run --config configs/search-stage1-imagenet100.json
+python main.py run --config configs/examples/search-stage1-imagenet100.json
 
 # Inspect saved Pareto candidates
-python main.py run --config configs/plot-search.json
+python main.py run --config configs/examples/plot-search.json
 
 # Stage II: FPGA analytical latency-based selection
-python main.py run --config configs/search-stage2-fpga.json
+python main.py run --config configs/examples/search-stage2-fpga.json
 ```
 
 Stage I saves `info.pth` and includes 20 search epochs, population 512, 128 crossover candidates, 128 mutation candidates, seed 2024, and an 80–90 million OP budget. The `--time_mode None` recipe uses OPs in Stage I. The `max-epochs` option controls evolutionary generations; it is unrelated to predictor-fitting epochs or final-network training epochs.
@@ -138,7 +148,7 @@ Stage I saves `info.pth` and includes 20 search epochs, population 512, 128 cros
 For local PyTorch timing of every candidate, use:
 
 ```bash
-python main.py run --config configs/search-stage2-pytorch.json
+python main.py run --config configs/examples/search-stage2-pytorch.json
 ```
 
 The timing recipe constructs every candidate's binary network and saves aligned architecture, accuracy, cost, and latency arrays in `info_second.pth`. Its default CPU settings use batch size 1, 20 warmup passes, 30 timed passes, and one compute thread, with latency reported in **milliseconds per batch**. CUDA timing synchronizes the selected device. See [measurement details](docs/reproducibility.md#measurement-scope) for experiment protocols.
@@ -163,7 +173,7 @@ run.sh                   Shell entrypoint from any working directory
 flashnas/                 Common CLI, run provenance, candidate-model construction
 flashnas/search/          Stage-one search, stage-two selection and Pareto plotting
 tools/                    Data preparation, architecture analysis and maintenance tools
-configs/                  Predictor, search, training, evaluation and plot recipes
+configs/examples/         Example configurations for the supported workflows
 net_predict/              CIF-Net and predictor baselines
 net_bw/                   Bandwidth predictor used by CPU CLE
 utils/                    Candidate encoding, cost models, datasets, logging and plots

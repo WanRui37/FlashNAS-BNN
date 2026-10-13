@@ -2,7 +2,7 @@
 
 Use Python 3.10 or later with compatible research dependencies. Run experiments directly with `python main.py` from the repository root; the project does not need to be installed. Run `python -m pytest -q` after a change.
 
-Add experiments as `configs/*.json` with a recognized task, explicit parameters, environment and unique run directory. Inspect the generated command with `--dry-run`. Change `run_dir` and all output directories when comparing seeds; never overwrite an earlier experiment's artifacts.
+Keep `configs/examples/*.json` as illustrative templates. Create your own experiment configuration by copying and adapting a template with a recognized task, explicit parameters, environment and unique run directory. Inspect the generated command with `--dry-run`. Change `run_dir` and all output directories when comparing seeds; never overwrite an earlier experiment's artifacts.
 
 The launcher delegates to the original scripts so that existing architecture/checkpoint formats remain usable. Model timing, device deployment and classification evaluation are separate operations. A new measurement backend should record candidate IDs, units, batch size, synchronization, warmup and repeat counts. A new FPGA/GPU backend must provide its actual toolchain; an analytical estimate is not a deployed measurement.
 

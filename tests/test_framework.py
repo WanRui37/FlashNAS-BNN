@@ -10,23 +10,23 @@ from flashnas.cli import ROOT, TASKS, execute, make_plan, read_config
 
 
 def test_all_example_configs_have_real_entrypoints():
-    for path in (ROOT / "configs").glob("*.json"):
+    for path in (ROOT / "configs/examples").glob("*.json"):
         config = read_config(path, [])
         plan = make_plan(config)
         assert (Path(plan["cwd"]) / TASKS[config["task"]][0]).exists()
         result = subprocess.run([sys.executable, str(ROOT / "main.py"), "run", "--config", str(path), "--dry-run"],
                                 cwd=ROOT, capture_output=True, text=True)
         assert result.returncode == 0, result.stderr
-    plan = make_plan(read_config(ROOT / "configs/train-stage1-imagenet100.json", []))
+    plan = make_plan(read_config(ROOT / "configs/examples/train-stage1-imagenet100.json", []))
     assert "torch.distributed.run" in plan["command"]
     assert "stage1/train/main/distributed_amp.py" not in plan["command"]
 
 
 def test_config_overrides_and_evaluation_checkpoint():
-    config = read_config(ROOT / "configs/search-stage1-imagenet100.json", ["parameters.seed=42"])
+    config = read_config(ROOT / "configs/examples/search-stage1-imagenet100.json", ["parameters.seed=42"])
     assert config["parameters"]["seed"] == 42
     with pytest.raises(ValueError, match="Unknown override"):
-        read_config(ROOT / "configs/search-stage1-imagenet100.json", ["parameters.typo=42"])
+        read_config(ROOT / "configs/examples/search-stage1-imagenet100.json", ["parameters.typo=42"])
     with pytest.raises(ValueError, match="Evaluation requires"):
         make_plan({"task": "evaluate", "parameters": {}})
 
@@ -35,7 +35,7 @@ def test_direct_entrypoint_requires_no_project_installation(tmp_path):
     # -S disables site-packages, including any editable installation.
     result = subprocess.run(
         [sys.executable, "-S", str(ROOT / "main.py"), "run", "--config",
-         str(ROOT / "configs/search-stage1-imagenet100.json"), "--dry-run"],
+         str(ROOT / "configs/examples/search-stage1-imagenet100.json"), "--dry-run"],
         cwd=tmp_path, capture_output=True, text=True,
     )
     assert result.returncode == 0, result.stderr
@@ -81,7 +81,7 @@ def test_model_candidates_are_independent_and_restore_environment(monkeypatch):
 
 
 def test_missing_artifacts_fail_before_creating_run_directory(tmp_path):
-    config = read_config(ROOT / "configs/search-stage1-imagenet100.json", [])
+    config = read_config(ROOT / "configs/examples/search-stage1-imagenet100.json", [])
     config["parameters"]["model_path"] = str(tmp_path / "missing.pth")
     config["run_dir"] = str(tmp_path / "run")
     path = tmp_path / "config.json"
@@ -118,7 +118,7 @@ def test_stage2_cpu_timing_runs_through_launcher(tmp_path):
     checkpoint = tmp_path / "candidates.pth"
     torch.save({"final_candidates": candidates, "final_candidates_acc": [0.7, 0.8],
                 "final_candidates_ops": [100.0, 200.0], "final_candidates_parm": [10.0, 20.0]}, checkpoint)
-    config = read_config(ROOT / "configs/search-stage2-pytorch.json", [])
+    config = read_config(ROOT / "configs/examples/search-stage2-pytorch.json", [])
     config["run_dir"] = str(tmp_path / "run")
     config["environment"] = {"OMP_NUM_THREADS": "1", "MKL_NUM_THREADS": "1"}
     config["parameters"].update(use_pth_name=str(checkpoint), logdir=str(tmp_path / "output"),
@@ -140,3 +140,31 @@ def test_python_sources_parse():
     for path in ROOT.rglob("*.py"):
         if not any(part.startswith(".") for part in path.relative_to(ROOT).parts):
             ast.parse(path.read_text(), filename=str(path))
+
+
+def test_initialization_preserves_boundary_candidates_without_checkpoint(tmp_path):
+    pytest.importorskip("torch")
+    from tools.data.architectures import read_architectures
+
+    outputs = []
+    for trial in range(2):
+        config = read_config(ROOT / "configs/examples/init-imagenet100.json", [])
+        config["run_dir"] = str(tmp_path / f"run-{trial}")
+        output = tmp_path / f"architectures-{trial}.txt"
+        config["parameters"].update(logdir=str(tmp_path / f"logs-{trial}"),
+                                     init_output_path=str(output), model_path=str(tmp_path / "missing.pth"),
+                                     init_max_candidates=2)
+        config["parameters"]["population-num"] = 4
+        path = tmp_path / f"config-{trial}.json"
+        path.write_text(json.dumps(config))
+        result = subprocess.run([sys.executable, str(ROOT / "main.py"), "run", "--config", str(path)],
+                                cwd=ROOT, capture_output=True, text=True, timeout=60)
+        assert result.returncode == 0, result.stdout + result.stderr
+        records = read_architectures(output)
+        assert len(records) == len(set(records)) == 6
+        # Preserve the intentionally oversized all-3x3 fitting boundary sample.
+        assert len(records[1][0]) == 32 and records[1][0][-1] == 1024
+        assert all(kernel == 0 for kernel in records[1][1])
+        assert "Top-1 acc:" not in result.stdout
+        outputs.append(output.read_text())
+    assert outputs[0] == outputs[1]
