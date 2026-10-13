@@ -14,7 +14,7 @@ def test_all_example_configs_have_real_entrypoints():
         config = read_config(path, [])
         plan = make_plan(config)
         assert (Path(plan["cwd"]) / TASKS[config["task"]][0]).exists()
-        result = subprocess.run([sys.executable, "-m", "flashnas", "run", "--config", str(path), "--dry-run"],
+        result = subprocess.run([sys.executable, str(ROOT / "main.py"), "run", "--config", str(path), "--dry-run"],
                                 cwd=ROOT, capture_output=True, text=True)
         assert result.returncode == 0, result.stderr
     plan = make_plan(read_config(ROOT / "configs/train-stage1-imagenet100.json", []))
@@ -29,6 +29,17 @@ def test_config_overrides_and_evaluation_checkpoint():
         read_config(ROOT / "configs/search-stage1-imagenet100.json", ["parameters.typo=42"])
     with pytest.raises(ValueError, match="Evaluation requires"):
         make_plan({"task": "evaluate", "parameters": {}})
+
+
+def test_direct_entrypoint_requires_no_project_installation(tmp_path):
+    # -S disables site-packages, including any editable installation.
+    result = subprocess.run(
+        [sys.executable, "-S", str(ROOT / "main.py"), "run", "--config",
+         str(ROOT / "configs/search-stage1-imagenet100.json"), "--dry-run"],
+        cwd=tmp_path, capture_output=True, text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "flashnas/search/stage_one.py" in result.stdout
 
 
 def test_predictor_split_is_disjoint_and_repeatable(tmp_path):
@@ -75,7 +86,7 @@ def test_missing_artifacts_fail_before_creating_run_directory(tmp_path):
     config["run_dir"] = str(tmp_path / "run")
     path = tmp_path / "config.json"
     path.write_text(json.dumps(config))
-    result = subprocess.run([sys.executable, "-m", "flashnas", "run", "--config", str(path)],
+    result = subprocess.run([sys.executable, str(ROOT / "main.py"), "run", "--config", str(path)],
                             cwd=ROOT, capture_output=True, text=True)
     assert result.returncode == 2
     assert "Required artifact not found" in result.stderr
@@ -114,7 +125,7 @@ def test_stage2_cpu_timing_runs_through_launcher(tmp_path):
                                  search_width=32, latency_warmup=1, latency_iterations=2)
     path = tmp_path / "config.json"
     path.write_text(json.dumps(config))
-    result = subprocess.run([sys.executable, "-m", "flashnas", "run", "--config", str(path)],
+    result = subprocess.run([sys.executable, str(ROOT / "main.py"), "run", "--config", str(path)],
                             cwd=ROOT, capture_output=True, text=True, timeout=60)
     assert result.returncode == 0, result.stdout + result.stderr
     saved = torch.load(tmp_path / "output/info_second.pth", map_location="cpu")
