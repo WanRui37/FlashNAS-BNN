@@ -1,0 +1,34 @@
+{
+  "task": "search-stage2",
+  "run_dir": "outputs/runs/search-stage2-fpga",
+  "parameters": {
+    "mode": "predict",
+    "use_pth_name": "./search_output/imagenet100/example/stage1/info.pth",
+    "logdir": "./search_output/imagenet100/example/stage2-fpga",
+    "model_path": "./net_predict_output/imagenet100/CharRNN_OUR_best.pth",
+    "platform": "fpga",
+    "device": "cpu",
+    "dataset": "imagenet100",
+    "baseline_arch": "mobilenet",
+    "acc_width": 224,
+    "search_width": 224,
+    "layer_len_start": 12,
+    "layer_len_end": 32,
+    "first_float": 1,
+    "alpha": 0.8,
+    "bw": 12.8,
+    "max_perform": 5160,
+    "precision": 8,
+    "w": [
+      0.5
+    ],
+    "T_min": 2.2,
+    "T_max": 2.5,
+    "acc_max_k": 0.5,
+    "hidden_size": 256,
+    "embed_dim_1": 8,
+    "embed_dim_2": 4,
+    "bw_output_path": "./net_bw_output/"
+  },
+  "environment": {}
+}

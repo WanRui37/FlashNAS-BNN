@@ -1,0 +1,11 @@
+{
+  "task": "plot",
+  "run_dir": "outputs/runs/plot-search",
+  "parameters": {
+    "checkpoint": "./search_output/imagenet100/example/stage1/info.pth",
+    "output_dir": "./outputs/pareto/example",
+    "mode": "ops",
+    "epoch": 20
+  },
+  "environment": {}
+}

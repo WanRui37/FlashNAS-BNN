@@ -21,3 +21,22 @@ search_first.log
 
 epoch_*_pareto*.png
 epochs_comparison_global*.png
+
+# Local research artifacts and environments
+.venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+2-npy/
+data/*
+!data/README.md
+checkpoints/*
+!checkpoints/README.md
+outputs/
+train_imagenet/outputs/
+net_predict_output/*
+!net_predict_output/.gitkeep
+search_output/*
+!search_output/.gitkeep
+net_bw_output/

@@ -1,0 +1,2 @@
+# Only needed for the GCN predictor baseline.
+torch-geometric==2.5.3

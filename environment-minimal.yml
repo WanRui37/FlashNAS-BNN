@@ -1,0 +1,13 @@
+name: flashnas-bnn
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pytorch=2.0.0
+  - torchvision=0.15.0
+  - pytorch-cuda=11.7
+  - pip:
+      - -r requirements.txt

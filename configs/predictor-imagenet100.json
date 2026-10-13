@@ -1,0 +1,21 @@
+{
+  "task": "predictor",
+  "run_dir": "outputs/runs/predictor-imagenet100",
+  "parameters": {
+    "model_arch": "OUR",
+    "dataset": "imagenet100",
+    "gpu": "0",
+    "mode": "train",
+    "epoches": 256,
+    "batch_size": 1,
+    "lr": 0.0001,
+    "embed_dim": 20,
+    "hidden_size": 256,
+    "dropout": 0,
+    "ratio": 0.8,
+    "out_path": "./net_predict_output/",
+    "data_root": "./2-npy",
+    "seed": 2024
+  },
+  "environment": {}
+}

@@ -1,3 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flashnas-bnn"
+version = "0.2.0"
+description = "Configured experiments for chain-structured binary neural architecture search"
+readme = "readme.md"
+requires-python = ">=3.10"
+
+[project.scripts]
+flashnas = "flashnas.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["flashnas*", "net_predict*", "net_bw*", "utils*", "train_imagenet*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
 [tool.isort]
 profile = 'black'
 known_third_party = ["paddle"]

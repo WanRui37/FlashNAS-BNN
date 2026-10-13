@@ -1,0 +1,30 @@
+{
+  "task": "evaluate",
+  "run_dir": "outputs/runs/evaluate-imagenet100",
+  "parameters": {
+    "data_set": "imagenet_tensor",
+    "data_path": "../data/imagenet100",
+    "job_dir": "./outputs/evaluate/example",
+    "arch": "reactnet_firstBConv_lbp_ther_48c_100_stage2",
+    "stage": 2,
+    "lr": 0.00125,
+    "batch_size": 32,
+    "optimizer": "Adam",
+    "weight_decay": 0,
+    "momentum": 0.9,
+    "epochs": 128,
+    "workers": 4,
+    "opt-level": "O0",
+    "seed": 2024,
+    "deterministic": true,
+    "baseline": false,
+    "baseline_model": null,
+    "resume": true,
+    "resume_model": "./outputs/stage2/example/checkpoint/model_best.pth.tar"
+  },
+  "environment": {
+    "ARCH_ALL": "(32, 32, 32, 64, 64, 64, 64, 96, 96, 192, 192, 192, 192, 320, 320, 320, 320, 320, 320, 320, 768, 768, 768, 768, 768, 2, 1, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)",
+    "CUDA_VISIBLE_DEVICES": "0"
+  },
+  "nproc": 1
+}
