@@ -160,6 +160,8 @@ The target-specific architectures combine competitive classification accuracy wi
 
 ```text
 flashnas/                 Common CLI, run provenance, candidate-model construction
+flashnas/search/          Stage-one search, stage-two selection and Pareto plotting
+tools/                    Data preparation, architecture analysis and maintenance tools
 configs/                  Predictor, search, training, evaluation and plot recipes
 net_predict/              CIF-Net and predictor baselines
 net_bw/                   Bandwidth predictor used by CPU CLE
@@ -174,7 +176,7 @@ docs/                    Experiment protocols and contributor guidance
 tests/                   CLI, artifact checks, dataset split and CPU model regressions
 ```
 
-Numbered root scripts remain available for feature generation, architecture inspection, result aggregation, and maintenance. Use the configured entrypoints for repeatable training, search, evaluation, and plotting experiments.
+Search implementations live in `flashnas/search/`; supporting utilities are organized under `tools/data/`, `tools/analysis/`, and `tools/maintenance/` with descriptive `snake_case` names. The configured CLI remains the main entrypoint for training, search, evaluation, and plotting. See [tools and script migration](docs/tools.md) for the complete filename mapping and utility commands.
 
 ## Reproducibility and development
 
