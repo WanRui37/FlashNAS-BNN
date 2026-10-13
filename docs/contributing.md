@@ -1,6 +1,6 @@
 # Development
 
-Use Python 3.10 for the historical research environment. Install the package with `python -m pip install -e . --no-deps` and run `python -m pytest -q` after a change.
+Use Python 3.10 or later with compatible research dependencies. Run experiments directly with `python main.py` from the repository root; the project does not need to be installed. Run `python -m pytest -q` after a change.
 
 Add experiments as `configs/*.json` with a recognized task, explicit parameters, environment and unique run directory. Inspect the generated command with `--dry-run`. Change `run_dir` and all output directories when comparing seeds; never overwrite an earlier experiment's artifacts.
 

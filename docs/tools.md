@@ -1,6 +1,6 @@
 # Tools and script organization
 
-Use `python -m flashnas run --config ...` for configured experiments. Search implementation modules live in `flashnas/search/`; standalone utilities are grouped by purpose under `tools/` and use descriptive `snake_case` filenames.
+Use `python main.py run --config ...` for configured experiments. Search implementation modules live in `flashnas/search/`; standalone utilities are grouped by purpose under `tools/` and use descriptive `snake_case` filenames.
 
 ## Filename mapping
 
@@ -19,7 +19,7 @@ Use `python -m flashnas run --config ...` for configured experiments. Search imp
 | `3-cal_acc_parm_op.py` | `tools/analysis/profile_architectures.py` |
 | `3-generate.py` | `tools/analysis/inspect_predictor_outputs.py` |
 
-The configured experiment commands and shell launchers already reference the new locations. For direct utility execution, run the module from the repository root, or use an editable installation.
+The configured experiment commands and shell launchers already reference the new locations. For direct utility execution, run the module from the repository root. No project installation is required.
 
 ## Data tools
 
