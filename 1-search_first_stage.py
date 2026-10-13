@@ -26,7 +26,7 @@ hidden_size = model_config.hidden_size
 dropout = model_config.dropout
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--logdir", type=str)
+parser.add_argument("--logdir", type=str, required=True)
 parser.add_argument("--mode", type=str, default="Search", help="Only-Init | Search", choices=["Only-Init", "Search"])
 parser.add_argument("--arch", metavar="ARCH", default="Predict_harsbnn")
 parser.add_argument("--model_path", type=str, default="./net_predict_output/")
@@ -1003,8 +1003,9 @@ def main_worker(gpu, args):
     ).to(device)
 
     # args.model_path = args.model_path + "/" + args.dataset + "/" + "CharRNN_OUR_best.pth"
-    state_dict = torch.load(args.model_path)
+    state_dict = torch.load(args.model_path, map_location=device)
     model.load_state_dict(state_dict)
+    model.eval()
 
     searcher = EvolutionSearcher(model, logger, args, device=device)
     searcher.search()

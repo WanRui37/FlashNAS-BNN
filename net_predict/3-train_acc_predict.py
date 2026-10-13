@@ -38,15 +38,16 @@ def get_parser():
 
     parser.add_argument("--model_arch", type=str, default="OUR", choices=["GCN", "Peephole", "v_SVR", "OUR"])
     parser.add_argument(
-        "--dataset", type=str, default="cifar10", choices=["cifar10", "cifar100", "ImageNet16-120", "imagenet100"]
+        "--dataset", type=str, default="cifar10", choices=["cifar10", "cifar100", "imagenet100"]
     )
 
     parser.add_argument("--gpu", type=str, default="5")
     parser.add_argument("--mode", type=str, default="train", choices=["train", "test"])
 
     parser.add_argument(
-        "--out_path", type=str, default="/mnt/wr/Train_Quant_Imagenet100_184_channel_v8_v1_改1个x/net_predict_output/"
+        "--out_path", type=str, default="./net_predict_output/"
     )
+    parser.add_argument("--data_root", default="./2-npy", help="Directory containing dataset-specific predictor arrays")
     args = parser.parse_args()
 
     return args
@@ -60,7 +61,7 @@ epoches = args.epoches
 embed_dim = args.embed_dim
 hidden_size = args.hidden_size
 dropout = args.dropout
-loss_outpic_path = "./1-loss_lstm.png"
+loss_outpic_path = os.path.join(args.out_path, args.dataset, "loss.png")
 device = "cuda" if torch.cuda.is_available() else "cpu"
 os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
@@ -69,11 +70,11 @@ if args.dataset == "imagenet100":
 elif args.dataset in ["cifar10", "cifar100"]:
     layer_len_max = 25
 
-output_path = "./net_predict_output/" + args.dataset + "/"
-np_best_accuracy_path = "./2-npy/" + args.dataset + "/" + "2-np_best_accuracy.npy"
-np_feature_single_vec_path = "./2-npy/" + args.dataset + "/" + "2-np_feature_single_vec.npy"
-np_feature_total_vec_path = "./2-npy/" + args.dataset + "/" + "2-np_feature_total_vec.npy"
-args.out_path = args.out_path + args.dataset + "/"
+output_path = os.path.join(args.out_path, args.dataset)
+np_best_accuracy_path = os.path.join(args.data_root, args.dataset) + "/" + "2-np_best_accuracy.npy"
+np_feature_single_vec_path = os.path.join(args.data_root, args.dataset) + "/" + "2-np_feature_single_vec.npy"
+np_feature_total_vec_path = os.path.join(args.data_root, args.dataset) + "/" + "2-np_feature_total_vec.npy"
+args.out_path = os.path.join(args.out_path, args.dataset)
 
 if not os.path.exists(args.out_path):
     os.makedirs(args.out_path)
@@ -84,7 +85,7 @@ else:
 log_path = os.path.join(args.out_path + "/log.txt")
 save_num = 1
 if os.path.exists(log_path):
-    os.remove(log_path)
+    pass  # Keep previous logs; each configured run uses its own output directory.
 else:
     pass
 
@@ -135,7 +136,7 @@ def train(epoches, model, criterion, scheduler, optimizer, train_data, valid_dat
             train_loss += loss.item()
             print(loss.item(), end="\r")
 
-        train_loss_single = train_loss / batch_size
+        train_loss_single = train_loss / len(train_data)
         logging.info(f"Epoch: {epoch+1}/{epoches}, lr: {lr:.10f} Loss: {train_loss_single:.6f}")
         loss_hist.append(train_loss_single)
 
@@ -193,7 +194,7 @@ def valid(epoch, epoches, model, criterion, valid_data, args):
             name=args.out_path + "/scatter_plot_" + str(args.model_arch) + ".pdf",
         )
 
-    valid_loss_single = valid_loss / batch_size
+    valid_loss_single = valid_loss / len(valid_data)
     logging.info(f"Epoch: {epoch+1}/{epoches}, MSE: {valid_loss_single:.6f} tau: {tau:.4f} r2: {r2:.4f}")
 
     return valid_loss_single
@@ -216,7 +217,7 @@ def main():
     # exit()
 
     train_data = DataLoader(train_set, batch_size, shuffle=True, num_workers=4)
-    valid_data = DataLoader(valid_set, batch_size, shuffle=True, num_workers=4)
+    valid_data = DataLoader(valid_set, batch_size, shuffle=False, num_workers=4)
 
     if args.model_arch == "GCN":
         if args.dataset == "imagenet100":
@@ -249,7 +250,7 @@ def main():
         loss_hist = train(epoches, model, criterion, scheduler, optimizer, train_data, valid_data, args)
         Draw_Linear_Graph([loss_hist, "train_loss"], output_file_path=loss_outpic_path)
     elif args.mode == "test":
-        state_dict = torch.load(args.out_path + "/CharRNN_" + str(args.model_arch) + "_best" + ".pth")
+        state_dict = torch.load(args.out_path + "/CharRNN_" + str(args.model_arch) + "_best" + ".pth", map_location=device)
         # state_dict = torch.load(args.out_path + "/CharRNN_" + str(args.model_arch) + "256" + ".pth")
 
         model.load_state_dict(state_dict)

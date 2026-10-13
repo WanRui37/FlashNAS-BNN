@@ -204,8 +204,17 @@ def get_train_valid_set(np_best_accuracy_path, np_feature_single_vec_path, np_fe
     print(f"feature_single_vec_torch.shape:{feature_single_vec_torch.shape}")
     print(f"feature_total_vec_torch.shape:{feature_total_vec_torch.shape}")
 
-    train_idx = torch.randperm(best_accuracy_torch.shape[0])[: int(best_accuracy_torch.shape[0] * ratio)]
-    valid_idx = torch.randperm(best_accuracy_torch.shape[0])[int(best_accuracy_torch.shape[0] * ratio) :]
+    if not 0 < ratio < 1:
+        raise ValueError("ratio must be strictly between 0 and 1")
+    sample_count = best_accuracy_torch.shape[0]
+    if feature_single_vec_torch.shape[0] != sample_count or feature_total_vec_torch.shape[0] != sample_count:
+        raise ValueError("Predictor arrays must contain the same number of samples")
+    split = int(sample_count * ratio)
+    if split == 0 or split == sample_count:
+        raise ValueError("Predictor split requires nonempty training and validation sets")
+    indices = torch.randperm(sample_count)
+    train_idx = indices[:split]
+    valid_idx = indices[split:]
     print(f"train_idx.shape:{train_idx.shape}")
     print(f"valid_idx.shape:{valid_idx.shape}")
     # exit()

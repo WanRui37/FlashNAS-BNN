@@ -7,7 +7,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.model_zoo as model_zoo
 from torch.autograd import Function
-from torch_geometric.nn import GCNConv, GINConv, GINEConv, Sequential
+try:
+    from torch_geometric.nn import GCNConv
+except ImportError:
+    def GCNConv(*args, **kwargs):
+        raise ImportError("GCN baselines require torch-geometric; install requirements-graph.txt")
 
 torch.manual_seed(2024)
 torch.backends.cudnn.benchmark = True

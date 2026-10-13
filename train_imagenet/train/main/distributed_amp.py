@@ -5,7 +5,7 @@ import shutil
 import sys
 import time
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 import logging
@@ -126,7 +126,7 @@ def main():
 
     import random
 
-    RANDOM_SEED = 1234  # any random number
+    RANDOM_SEED = args.seed if args.seed is not None else 1234
 
     def set_seed(seed):
         random.seed(seed)

@@ -4,7 +4,7 @@ import torch
 class Config:
     def __init__(self):
         self.model_type = "lstm"  # lstm or gru
-        self.device = torch.device("cuda:0")
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         # self.device = torch.device('cpu')
 
         """""" """""" """""" """

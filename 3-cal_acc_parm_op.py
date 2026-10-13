@@ -13,7 +13,7 @@ import torch.nn as nn
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 
-from net_predict.Predict_RNN import *
+from net_predict.net.Predict_RNN import *
 from utils.calculate import *
 from utils.cand import *
 from utils.config import Config
