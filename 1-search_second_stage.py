@@ -9,8 +9,6 @@ import warnings
 import numpy
 import torch
 import torch.nn as nn
-import torchvision.datasets as datasets
-import torchvision.transforms as transforms
 
 from net_bw.dataset_bw import *
 from net_bw.Predict_BW import *
@@ -30,7 +28,8 @@ hidden_size = model_config.hidden_size
 dropout = model_config.dropout
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--logdir", type=str)
+parser.add_argument("--logdir", type=str, required=True)
+parser.add_argument("--model_path", type=str, default="./net_predict_output/imagenet100/CharRNN_OUR_best.pth")
 parser.add_argument("--mode", type=str, default="real_time", choices=["real_time", "predict", "use_pth"])
 parser.add_argument("--use_pth_name", type=str, default="info.pth", help="使用的pth文件名")
 
@@ -160,7 +159,7 @@ def main_worker(args):
         os.makedirs(args.logdir)
     logger = get_logger(name="Search", log_file=osp.join(args.logdir, "search_second.log"), log_level=logging.INFO)
 
-    checkpoint = torch.load(args.use_pth_name)
+    checkpoint = torch.load(args.use_pth_name, map_location=args.device)
 
     t = time.time()
     try:
@@ -187,12 +186,17 @@ def main_worker(args):
     final_candidates_parm = torch.tensor(final_candidates_parm).to(args.device)
 
     if args.mode == "predict":
-        model_bw = Predict_BW(
-            embed_dim_1=args.embed_dim_1, embed_dim_2=args.embed_dim_2, hidden_size=args.hidden_size
-        ).to(args.device)
-        state_dict = torch.load(args.bw_output_path + "/model_best.pth")
-        model_bw.load_state_dict(state_dict)
-        model_bw.eval()
+        if args.platform == "gpu":
+            raise ValueError("GPU CLE predictor is not included in this release")
+        model_config.device = torch.device(args.device)
+        model_bw = None
+        if args.platform == "cpu":
+            model_bw = Predict_BW(
+                embed_dim_1=args.embed_dim_1, embed_dim_2=args.embed_dim_2, hidden_size=args.hidden_size
+            ).to(args.device)
+            state_dict = torch.load(args.bw_output_path + "/model_best.pth", map_location=args.device)
+            model_bw.load_state_dict(state_dict)
+            model_bw.eval()
 
         final_candidates_latency = [
             get_latency(
@@ -216,7 +220,7 @@ def main_worker(args):
         if args.save_pth:
             indices = id_sort[:]
         else:
-            indices = id_sort[1:]
+            indices = id_sort[:]  # Keep every candidate aligned with its measurements
 
         final_candidates = final_candidates[indices]
         final_candidates_ops = final_candidates_ops[indices]

@@ -73,7 +73,7 @@ def get_cand_acc(cand, args, device):
     elif args.dataset in ["cifar10", "cifar100"]:
         model = Predict_harsbnn_cifar(embed_dim, hidden_size, dropout, device).to(device)
 
-    state_dict = torch.load(output_path + "/" + args.dataset + "/CharRNN_OUR_best.pth")
+    state_dict = torch.load(getattr(args, "model_path", output_path + "/" + args.dataset + "/CharRNN_OUR_best.pth"), map_location=device)
     # state_dict = torch.load(output_path + '/CharRNN_lstm1.pth')
     # state_dict = torch.load(output_path + '/CharRNN_lstm7.pth')
     # state_dict = torch.load(output_path + '/CharRNN_lstm13.pth')
@@ -84,6 +84,7 @@ def get_cand_acc(cand, args, device):
     # state_dict = torch.load(output_path + '/CharRNN_lstm85.pth')
     # state_dict = torch.load(output_path + '/CharRNN_lstm127.pth')
     model.load_state_dict(state_dict)
+    model.eval()
 
     for data in predict_data:
         x, y = data
@@ -184,25 +185,16 @@ def cal_act_lantency(conv_complexity, bw_complexity, alpha=0.8, bw=12.8, max_per
     return latency_singles
 
 
-def get_bw_feature(list, type_tensor, embed_dim_1, embed_dim_2):
+def get_bw_feature(list, type_tensor, embed_dim_1, embed_dim_2, device=None):
     """
     W_in, c_in, W_out, c_out,
     compute, parm, input, output, tpye
     """
-    concat_tensor = []
-    for data in list:
-        if type(data) is torch.Tensor:
-            tensor_data = data
-        else:
-            tensor_data = torch.tensor(data).to(model_config.device)
-        concat_tensor.append(tensor_data)
-    concat_tensor = torch.tensor(concat_tensor).to(model_config.device).float()
-
-    type_tensor = torch.tensor(to_one_hot(type_tensor, embed_dim_2, 0)).to(model_config.device)
-    concat_tensor = torch.concat((concat_tensor, type_tensor), dim=0).view(1, -1)
-    concat_tensor = normalization_simple(concat_tensor, embed_dim_1)
-
-    return concat_tensor
+    device = torch.device(device) if device is not None else model_config.device
+    concat_tensor = torch.tensor([float(data) for data in list], device=device, dtype=torch.float32)
+    type_tensor = torch.tensor(to_one_hot(type_tensor, embed_dim_2, 0), device=device)
+    concat_tensor = torch.cat((concat_tensor, type_tensor), dim=0).view(1, -1)
+    return normalization_simple(concat_tensor, embed_dim_1)
 
 
 def get_latency(
@@ -265,6 +257,7 @@ def get_latency(
             0,
             embed_dim_1,
             embed_dim_2,
+            device=args.device,
         )
         conv_bw = torch.pow(2, model(x))
         latency_conv = cal_act_lantency(conv_complexity, conv_bw, alpha=alpha, bw=bw, max_perform=max_perform)
@@ -334,6 +327,7 @@ def get_latency(
                 type,
                 embed_dim_1,
                 embed_dim_2,
+                device=args.device,
             )
             conv_bw = torch.pow(2, model(x))
             latency_conv = cal_act_lantency(conv_complexity, conv_bw, alpha=alpha, bw=bw, max_perform=max_perform)
@@ -365,6 +359,7 @@ def get_latency(
             1,
             embed_dim_1,
             embed_dim_2,
+            device=args.device,
         )
         conv_bw = torch.pow(2, model(x))
         # print(f"conv_bw:{conv_bw}")
@@ -424,94 +419,28 @@ def get_latency_real_time(args, cand):
 
 
 def measure_latency_pytorch(cand, args, device):
-    """
-    使用PyTorch直接测量架构的实际推理延迟
-    """
+    """Time the actual candidate model in PyTorch; milliseconds per batch."""
+    from flashnas.models import build_model
 
-    # 构建架构参数
-    cand_shape = int(cand.shape[0] / 3)
-    channel_1 = cand[:cand_shape]
-    stride_1 = cand[cand_shape : cand_shape * 2]
-    conv_type_1 = cand[cand_shape * 2 :]
-
-    # 过滤掉填充值-1
-    valid_indices = channel_1 != -1
-    channel_1 = channel_1[valid_indices]
-    stride_1 = stride_1[valid_indices]
-    conv_type_1 = conv_type_1[valid_indices]
-
-    # 设置环境变量以便flashnas_bnn_stage2.py可以读取架构参数
-    os.environ["STAGE_OUT_CHANNEL"] = str(channel_1.cpu().numpy().tolist())
-    os.environ["CONV_TYPE_ARRAY"] = str(conv_type_1.cpu().numpy().tolist())
-    os.environ["STRIDE_ARRAY"] = str(stride_1.cpu().numpy().tolist())
-
-    if args.first_float:
-        try:
-            from train.nets.flashnas_bnn_stage2 import flashnas_bnn_stage2
-        except:
-            from .train.nets.flashnas_bnn_stage2 import flashnas_bnn_stage2
-
-    else:
-        try:
-            from train_imagenet.stage1.train.nets.reactnet_firstBConv_lbp_ther_48c_100_stage1 import (
-                flashnas_bnn_stage2,
-            )
-        except:
-            from .train_imagenet.stage1.train.nets.reactnet_firstBConv_lbp_ther_48c_100_stage1 import (
-                flashnas_bnn_stage2,
-            )
-
-    # 创建模型
-    if args.dataset == "imagenet100":
-        num_classes = 100
-        input_size = 224
-    elif args.dataset in ["cifar10", "cifar100"]:
-        num_classes = 10 if args.dataset == "cifar10" else 100
-        input_size = 32
-
-    if isinstance(args.latency_device, str):
-        device_obj = torch.device(args.latency_device)
-    else:
-        device_obj = device
-
-    model = flashnas_bnn_stage2(num_classes=num_classes)
-    model = model.to(device_obj)
-    model.eval()
-
-    # 创建测试输入
-    batch_size = args.latency_batch_size
-    input_tensor = torch.randn(batch_size, 3, input_size, input_size).to(device_obj)
-
-    # Warmup
-    for _ in range(args.latency_warmup):
-        with torch.no_grad():
-            _ = model(input_tensor)
-
-    # 测量延迟 - 修正设备类型检查
-    if device_obj.type == "cuda":
-        torch.cuda.synchronize()
-    start_time = time.time()
-
-    for _ in range(args.latency_iterations):
-        with torch.no_grad():
-            _ = model(input_tensor)
-
-    if device_obj.type == "cuda":
-        torch.cuda.synchronize()
-    end_time = time.time()
-
-    # 计算平均延迟（毫秒）
-    avg_latency = (end_time - start_time) * 1000 / args.latency_iterations
-
-    # 清理环境变量
-    if "STAGE_OUT_CHANNEL" in os.environ:
-        del os.environ["STAGE_OUT_CHANNEL"]
-    if "CONV_TYPE_ARRAY" in os.environ:
-        del os.environ["CONV_TYPE_ARRAY"]
-    if "STRIDE_ARRAY" in os.environ:
-        del os.environ["STRIDE_ARRAY"]
-
-    return torch.tensor([avg_latency]).to(device)
+    if args.dataset != "imagenet100":
+        raise ValueError("This release provides ImageNet-100 candidate networks only")
+    if args.latency_iterations < 1 or args.latency_batch_size < 1 or args.latency_warmup < 0:
+        raise ValueError("Invalid latency measurement counts")
+    device_obj = torch.device(device)
+    model = build_model(cand.detach().cpu().tolist(), num_classes=100, stage=2).to(device_obj).eval()
+    input_tensor = torch.randn(args.latency_batch_size, 3, args.search_width, args.search_width, device=device_obj)
+    with torch.inference_mode():
+        for _ in range(args.latency_warmup):
+            model(input_tensor)
+        if device_obj.type == "cuda":
+            torch.cuda.synchronize(device_obj)
+        start = time.perf_counter()
+        for _ in range(args.latency_iterations):
+            model(input_tensor)
+        if device_obj.type == "cuda":
+            torch.cuda.synchronize(device_obj)
+    latency_ms = (time.perf_counter() - start) * 1000 / args.latency_iterations
+    return torch.tensor([latency_ms], device=args.device)
 
 
 def get_index(folder_path):
