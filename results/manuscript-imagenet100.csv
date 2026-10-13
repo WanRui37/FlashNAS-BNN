@@ -1,0 +1,4 @@
+architecture,target_device,top1_percent,latency_mean_ms_per_image,latency_sd_ms_per_image,source
+FlashNAS-BNN-G,CPU Cortex-X4,81.40,164.57,1.37,revised manuscript tab:4
+FlashNAS-BNN-H,GPU Mali-G77,81.86,48.45,0.21,revised manuscript tab:4
+FlashNAS-BNN-I,FPGA XC7VX690T,81.61,2.340,0.008,revised manuscript tab:4
