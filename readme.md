@@ -97,6 +97,8 @@ Labels use accuracy percentages, such as 81.40. Feature encoders and normalizati
 
 See [checkpoint formats and locations](checkpoints/README.md) to organize CIF-Net, CLE, candidate-search, and trained-network artifacts. Predictor training and two-stage network training generate checkpoints for subsequent search and evaluation.
 
+**Pretrained model release:** Trained checkpoints for the FlashNAS-BNN models will be publicly released after the paper is accepted. Download links and model-specific loading instructions will be added here upon release.
+
 ## Training and evaluation
 
 The training recipes include an explicit candidate architecture. Set `environment.ARCH_ALL` to train your selected architecture, using the **same** value for both stages. Architecture encoding is documented in [data/README.md](data/README.md).

@@ -1,6 +1,6 @@
 # Checkpoints
 
-No pretrained model files or verified public download links are distributed here. Do not substitute random weights for pretrained evaluation.
+Trained checkpoints for the FlashNAS-BNN models will be publicly released after the paper is accepted. Download links and model-specific loading instructions will be added to the repository upon release.
 
 | Artifact | Default location | Format and producer |
 | --- | --- | --- |
